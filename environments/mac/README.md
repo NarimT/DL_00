@@ -87,13 +87,13 @@ chmod +x install_pygile_macos.sh
 ## 6. Activate Environment
 
 ```bash
-mamba activate pygile_base
+mamba activate pygile
 ```
 
 ## 7. Test Installation
 
 ```bash
-python -c 'import geopandas, rasterio, geowombat, jupyter; print("All packages working!")'
+python -c 'import geopandas, rasterio, xarray, matplotlib, numpy, pandas, folium, plotly; print("All packages working!")'
 ```
 
 Should show: All packages working!
@@ -101,8 +101,23 @@ Should show: All packages working!
 ## Daily Usage
 
 ```bash
-mamba activate pygile_base
+mamba activate pygile
 jupyter lab
 ```
 
 Navigate to pyGILE-main folder and open notebooks in pyGILE_notebooks folder
+
+## Installed Packages
+
+This environment includes:
+- **Core GIS**: GeoPandas, Rasterio, Shapely, Fiona, PyProj
+- **Visualization**: Matplotlib, Plotly, Bokeh, Folium, Contextily
+- **Interactive Mapping**: ipyleaflet, geemap, leafmap
+- **Data Processing**: Xarray, Pandas, NumPy, SciPy
+- **Raster Analysis**: rioxarray, rasterstats, xarray-spatial
+- **Cloud Data**: pystac, stackstac, planetary-computer
+- **Network Analysis**: OSMnx
+- **Earth Engine**: earthengine-api
+- **Image Processing**: scikit-image
+- **Development Tools**: Jupyter Lab, black, flake8
+- **And many more geospatial tools!**

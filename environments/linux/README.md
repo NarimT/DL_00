@@ -76,15 +76,15 @@ eval "$(mamba shell hook --shell bash)"
 
 Then activate:
 ```bash
-mamba activate pygile_base
+mamba activate pygile
 ```
 
-Your prompt should now show (pygile_base) at the beginning of each line.
+Your prompt should now show (pygile) at the beginning of each line.
 
 ## 7. Test Installation
 
 ```bash
-python -c 'import geopandas, rasterio, geowombat, jupyter; print("All packages working!")'
+python -c 'import geopandas, rasterio, xarray, matplotlib, numpy, pandas, folium, plotly; print("All packages working!")'
 ```
 
 You should see: "All packages working!"
@@ -96,7 +96,22 @@ You should see: "All packages working!"
 Every time you want to use PyGILE:
 
 1. Open Terminal (Ctrl+Alt+T)
-2. `mamba activate pygile_base`
+2. `mamba activate pygile`
 3. `jupyter lab`
 
 Navigate to pyGILE-main folder and open notebooks in pyGILE_notebooks folder
+
+## Installed Packages
+
+This environment includes:
+- **Core GIS**: GeoPandas, Rasterio, Shapely, Fiona, PyProj
+- **Visualization**: Matplotlib, Plotly, Bokeh, Folium, Contextily
+- **Interactive Mapping**: ipyleaflet, geemap, leafmap
+- **Data Processing**: Xarray, Pandas, NumPy, SciPy
+- **Raster Analysis**: rioxarray, rasterstats, xarray-spatial, geowombat
+- **Cloud Data**: pystac, stackstac, planetary-computer
+- **Network Analysis**: OSMnx
+- **Earth Engine**: earthengine-api
+- **Image Processing**: scikit-image
+- **Development Tools**: Jupyter Lab, black, flake8
+- **And many more geospatial tools!**

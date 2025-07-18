@@ -26,18 +26,18 @@ echo "Installation started at $(date)" > "$LOGFILE"
 echo "Error summary" > "$ERRORLOG"
 
 # Remove existing environment
-$INSTALLER env remove -n pygile_base -y &>/dev/null
+$INSTALLER env remove -n pygile -y &>/dev/null
 
 # Install package function with fallback for architecture issues
 install_package() {
     local package="$1"
-    if $INSTALLER install -n pygile_base -c conda-forge "$package" -y &>> "$LOGFILE"; then
+    if $INSTALLER install -n pygile -c conda-forge "$package" -y &>> "$LOGFILE"; then
         ((SUCCESS_COUNT++))
     else
         # Try without version constraint for Apple Silicon compatibility
         local base_package=$(echo "$package" | cut -d'=' -f1)
         if [[ "$package" != "$base_package" ]]; then
-            if $INSTALLER install -n pygile_base -c conda-forge "$base_package" -y &>> "$LOGFILE"; then
+            if $INSTALLER install -n pygile -c conda-forge "$base_package" -y &>> "$LOGFILE"; then
                 echo "FALLBACK SUCCESS: $base_package (version constraint removed)" >> "$LOGFILE"
                 ((SUCCESS_COUNT++))
                 return 0
@@ -51,7 +51,7 @@ install_package() {
 # Install pip package function
 install_pip_package() {
     local package="$1"
-    if $INSTALLER run -n pygile_base pip install "$package" &>> "$LOGFILE"; then
+    if $INSTALLER run -n pygile pip install "$package" &>> "$LOGFILE"; then
         ((SUCCESS_COUNT++))
     else
         echo "PIP FAILED: $package" >> "$ERRORLOG"
@@ -61,7 +61,7 @@ install_pip_package() {
 
 # Create base environment
 echo "Creating base environment"
-if ! $INSTALLER create -n pygile_base -c conda-forge python=3.10 -y >> "$LOGFILE" 2>&1; then
+if ! $INSTALLER create -n pygile -c conda-forge python=3.10 -y >> "$LOGFILE" 2>&1; then
     echo "CRITICAL: Failed to create base environment"
     exit 1
 fi
@@ -111,11 +111,46 @@ data_format_packages=(
     "netcdf4"
     "h5netcdf"
     "xarray"
+    "rioxarray"
+    "zarr"
+    "tifffile"
+)
+
+# Parallel computing
+parallel_packages=(
+    "dask"
 )
 
 # Visualization
 visualization_packages=(
     "plotly"
+    "bokeh"
+    "ipyleaflet"
+)
+
+# Image processing
+image_packages=(
+    "scikit-image"
+    "imageio-ffmpeg"
+)
+
+# Cloud and data access
+cloud_packages=(
+    "pystac"
+    "stackstac"
+    "planetary-computer"
+)
+
+# Web mapping
+webmap_packages=(
+    "localtileserver"
+    "rio-cogeo"
+    "owslib"
+)
+
+# Statistical tools
+stats_packages=(
+    "palettable"
 )
 
 # Jupyter
@@ -142,6 +177,16 @@ pip_packages=(
     "census==0.8.24"
     "us==3.2.0"
     "sklearn-xarray==0.4.0"
+    "geemap"
+    "leafmap"
+    "rasterstats"
+    "xarray-spatial"
+    "earthengine-api"
+    "black"
+    "flake8"
+    "nbconvert"
+    "myst-parser"
+    "streamlit-folium"
 )
 
 echo "Installing system dependencies"
@@ -169,8 +214,33 @@ for package in "${data_format_packages[@]}"; do
     install_package "$package"
 done
 
+echo "Installing parallel computing packages"
+for package in "${parallel_packages[@]}"; do
+    install_package "$package"
+done
+
 echo "Installing visualization packages"
 for package in "${visualization_packages[@]}"; do
+    install_package "$package"
+done
+
+echo "Installing image processing packages"
+for package in "${image_packages[@]}"; do
+    install_package "$package"
+done
+
+echo "Installing cloud and data access packages"
+for package in "${cloud_packages[@]}"; do
+    install_package "$package"
+done
+
+echo "Installing web mapping packages"
+for package in "${webmap_packages[@]}"; do
+    install_package "$package"
+done
+
+echo "Installing statistical tools"
+for package in "${stats_packages[@]}"; do
     install_package "$package"
 done
 
@@ -191,12 +261,12 @@ for package in "${pip_packages[@]}"; do
 done
 
 # Summary
-TOTAL=$((${#system_packages[@]} + ${#scientific_packages[@]} + ${#geospatial_core_packages[@]} + ${#geospatial_extra_packages[@]} + ${#data_format_packages[@]} + ${#visualization_packages[@]} + ${#jupyter_packages[@]} + ${#pip_dependencies[@]} + ${#pip_packages[@]}))
+TOTAL=$((${#system_packages[@]} + ${#scientific_packages[@]} + ${#geospatial_core_packages[@]} + ${#geospatial_extra_packages[@]} + ${#data_format_packages[@]} + ${#parallel_packages[@]} + ${#visualization_packages[@]} + ${#image_packages[@]} + ${#cloud_packages[@]} + ${#webmap_packages[@]} + ${#stats_packages[@]} + ${#jupyter_packages[@]} + ${#pip_dependencies[@]} + ${#pip_packages[@]}))
 echo "Installation complete: $SUCCESS_COUNT/$TOTAL packages installed"
 echo "Failed packages: $ERROR_COUNT (see $ERRORLOG)"
 
 # Test installation
-if $INSTALLER run -n pygile_base python -c "import geopandas, rasterio; print('Core packages working')" &>/dev/null; then
+if $INSTALLER run -n pygile python -c "import geopandas, rasterio, xarray, matplotlib, numpy, pandas, folium, plotly; print('Core packages working')" &>/dev/null; then
     echo "SUCCESS: Environment ready for use"
 else
     echo "WARNING: Core packages verification failed"
