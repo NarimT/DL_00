@@ -41,3 +41,26 @@ Enhanced from [mmann1123/pyGIS](https://github.com/mmann1123/pyGIS) by Geoinform
 ## Reference & Citation
 
 Awasthi, B., Ninsawat, S., Raghavan, V., & Nemoto, T. (2025). PyGILE - Python GeoInformatics Lab Environment (1.0). PyGILE: A Cross-Platform Python Environment for Geospatial Analysis, FOSS4G-Kansai, Osaka. Zenodo. https://doi.org/10.5281/zenodo.16144781
+
+
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16144781.svg)](https://doi.org/10.5281/zenodo.16144781)
+
+reStructuredText
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.16144781.svg
+  :target: https://doi.org/10.5281/zenodo.16144781
+
+HTML
+
+<a href="https://doi.org/10.5281/zenodo.16144781"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.16144781.svg" alt="DOI"></a>
+
+Image URL
+
+https://zenodo.org/badge/DOI/10.5281/zenodo.16144781.svg
+
+Target URL
+
+https://doi.org/10.5281/zenodo.16144781
+
+
