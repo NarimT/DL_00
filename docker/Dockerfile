@@ -3,7 +3,7 @@ FROM ghcr.io/osgeo/gdal:ubuntu-full-latest
 
 # Maintainer info
 LABEL maintainer="pyGILE Team"
-LABEL description="pyGILE_base comprehensive geospatial analysis environment"
+LABEL description="pygile comprehensive geospatial analysis environment"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive

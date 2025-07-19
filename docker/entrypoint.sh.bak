@@ -6,7 +6,7 @@ set -e
 
 # Display environment info
 echo "========================================"
-echo "pyGILE_base Comprehensive Environment"
+echo "pygile Comprehensive Environment"
 echo "========================================"
 echo "Python version: $(python --version)"
 echo "GDAL version: $(gdalinfo --version)"
@@ -66,7 +66,7 @@ cat > /workspace/notebooks/Welcome.ipynb << 'EOF'
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "# Welcome to pyGILE_base Comprehensive Environment\n",
+    "# Welcome to pygile Comprehensive Environment\n",
     "\n",
     "This Docker container includes the most comprehensive collection of geospatial Python packages available.\n",
     "\n",
