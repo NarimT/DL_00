@@ -21,32 +21,60 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Configure conda and install all packages in one layer with aggressive cleanup
-RUN conda config --set channel_priority strict && \
-    mamba install -n base -c conda-forge \
+# Configure conda
+RUN conda config --set channel_priority strict
+
+# Install core Python and scientific stack
+RUN mamba install -n base -c conda-forge -y \
     python=3.10 numpy pandas scipy matplotlib \
-    geopandas rasterio shapely pyproj fiona \
+    && mamba clean -all -y
+
+# Install core geospatial libraries
+RUN mamba install -n base -c conda-forge -y \
+    gdal geopandas rasterio shapely pyproj fiona \
+    && mamba clean -all -y
+
+# Install data format libraries
+RUN mamba install -n base -c conda-forge -y \
     xarray netcdf4 h5py zarr \
+    && mamba clean -all -y
+
+# Install visualization packages
+RUN mamba install -n base -c conda-forge -y \
     plotly bokeh folium contextily \
+    && mamba clean -all -y
+
+# Install Jupyter ecosystem
+RUN mamba install -n base -c conda-forge -y \
     jupyter jupyterlab ipywidgets \
+    && mamba clean -all -y
+
+# Install geospatial analysis tools
+RUN mamba install -n base -c conda-forge -y \
     osmnx earthpy \
-    gdal \
+    && mamba clean -all -y
+
+# Install machine learning
+RUN mamba install -n base -c conda-forge -y \
     scikit-learn \
-    -y && \
-    pip install --no-cache-dir \
+    && mamba clean -all -y
+
+# Install additional packages via pip (your original list without geowombat)
+RUN pip install --no-cache-dir \
     earthengine-api streamlit-folium nbconvert black flake8 \
+    && pip cache purge
+
+RUN pip install --no-cache-dir \
     sympy jupyter-book geojson pykrige \
-    geoplot \
-    sklearn-xarray \
-    census \
-    git+https://github.com/jgrss/geowombat.git && \
-    mamba clean -afy && \
-    conda clean -afy && \
-    pip cache purge && \
-    rm -rf /opt/conda/pkgs/* && \
-    rm -rf /tmp/* /var/tmp/* && \
-    find /opt/conda -name "*.pyc" -delete && \
-    find /opt/conda -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    && pip cache purge
+
+RUN pip install --no-cache-dir \
+    geoplot sklearn-xarray census \
+    && pip cache purge
+
+RUN mamba install -n pygile -c conda-forge -y \
+    localtileserver rio-cogeo rioxarray \
+    && mamba clean -all -y
 
 # Copy entrypoint script and fix line endings
 COPY entrypoint.sh /usr/local/bin/

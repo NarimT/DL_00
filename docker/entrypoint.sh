@@ -17,30 +17,24 @@ echo "========================================"
 source /opt/conda/etc/profile.d/conda.sh
 conda activate base
 
-# Test core geospatial packages
-echo "Testing core geospatial packages..."
+# Test core geospatial packages silently
 python -c "
 import sys
 packages = [
     'gdal', 'geopandas', 'rasterio', 'shapely', 'fiona', 
-    'pyproj', 'folium', 'contextily', 'geowombat',
+    'pyproj', 'folium', 'contextily',
     'matplotlib', 'numpy', 'pandas', 'jupyter'
 ]
 failed = []
 for pkg in packages:
     try:
         __import__(pkg)
-        print(f'✓ {pkg}')
-    except ImportError as e:
-        print(f'✗ {pkg}: {e}')
+    except ImportError:
         failed.append(pkg)
 
 if failed:
-    print(f'WARNING: {len(failed)} packages failed to import')
     sys.exit(1)
-else:
-    print('SUCCESS: All core packages working!')
-"
+" 2>/dev/null
 
 # Set up Jupyter configuration
 mkdir -p /root/.jupyter
@@ -66,9 +60,9 @@ cat > /workspace/notebooks/Welcome.ipynb << 'EOF'
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "# Welcome to pygile Comprehensive Environment\n",
+    "# Welcome to pygile Environment\n",
     "\n",
-    "This Docker container includes the most comprehensive collection of geospatial Python packages available.\n",
+    "This Docker container includes a comprehensive collection of geospatial Python packages for analysis and visualization.\n",
     "\n",
     "## Quick Test"
    ]
@@ -99,12 +93,13 @@ cat > /workspace/notebooks/Welcome.ipynb << 'EOF'
     "\n",
     "This environment includes:\n",
     "- **Core GIS**: GDAL, GeoPandas, Shapely, Fiona, PyProj\n",
-    "- **Raster Analysis**: Rasterio, GeoWombat, Whitebox\n",
-    "- **Visualization**: Folium, Contextily, HoloViews, GeoViews\n",
-    "- **Earth Observation**: Satpy, PyResample\n",
-    "- **Machine Learning**: TensorFlow, Scikit-learn, OpenCV\n",
-    "- **Climate Data**: xESMF, CFGrib\n",
-    "- **And many more...**"
+    "- **Raster Analysis**: Rasterio\n",
+    "- **Visualization**: Folium, Contextily, Plotly, Bokeh, Matplotlib\n",
+    "- **Data Science**: NumPy, Pandas, SciPy, Scikit-learn\n",
+    "- **Data Formats**: XArray, NetCDF4, HDF5, Zarr\n",
+    "- **Jupyter**: JupyterLab, IPython Widgets\n",
+    "- **Additional Tools**: OSMnx, EarthPy, GeoPlot\n",
+    "- **Development**: Black, Flake8, SymPy, Jupyter-Book"
    ]
   }
  ],
