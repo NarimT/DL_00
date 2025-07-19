@@ -1,6 +1,6 @@
 # PyGILE - Python GeoInformatics Lab Environment
 
-PyGILE is a complete geospatial Python environment for learning and teaching GIS programming with Jupyter. Built as a modern, lightweight fork of PyGIS, it features interactive Jupyter Notebooks and runs seamlessly on Windows, Linux, and macOS.
+PyGILE is a geospatial Python environment for learning and teaching GIS programming with Jupyter. Built as a modern, lightweight fork of PyGIS, it features interactive Jupyter Notebooks and runs seamlessly on Windows, Linux, and macOS.
 
 ## Quick Start
 
