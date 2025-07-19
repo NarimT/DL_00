@@ -29,7 +29,7 @@
 docker pull dockagile/pygile
 
 # Run with volume mounting (PowerShell)
-docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile dockagilen/pygile
+docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile dockagile/pygile
 
 # Run with volume mounting (Command Prompt)
 docker run --name pygile -p 8888:8888 -v %cd%:/workspace/pygile dockagile/pygile
