@@ -23,32 +23,42 @@ echo Installation started at %date% %time% > %LOGFILE%
 echo Error summary > %ERRORLOG%
 
 REM ============================================================
-REM Find conda installation
+REM Find MINIFORGE installation ONLY
 REM ============================================================
-echo [1/30] Searching for conda installation... [3%%]
+echo [1/30] Searching for miniforge installation... [3%%]
 set CONDA_EXE=
 set MAMBA_EXE=
 
+REM Check for miniforge in user profile first
 if exist "%USERPROFILE%\miniforge3\Scripts\conda.exe" (
     set CONDA_EXE=%USERPROFILE%\miniforge3\Scripts\conda.exe
     if exist "%USERPROFILE%\miniforge3\Scripts\mamba.exe" set MAMBA_EXE=%USERPROFILE%\miniforge3\Scripts\mamba.exe
+    echo Found miniforge in user profile: %USERPROFILE%\miniforge3
 )
-if exist "%USERPROFILE%\miniconda3\Scripts\conda.exe" (
-    set CONDA_EXE=%USERPROFILE%\miniconda3\Scripts\conda.exe
-    if exist "%USERPROFILE%\miniconda3\Scripts\mamba.exe" set MAMBA_EXE=%USERPROFILE%\miniconda3\Scripts\mamba.exe
-)
-if exist "C:\miniforge3\Scripts\conda.exe" (
-    set CONDA_EXE=C:\miniforge3\Scripts\conda.exe
-    if exist "C:\miniforge3\Scripts\mamba.exe" set MAMBA_EXE=C:\miniforge3\Scripts\mamba.exe
-)
-if exist "C:\miniconda3\Scripts\conda.exe" (
-    set CONDA_EXE=C:\miniconda3\Scripts\conda.exe
-    if exist "C:\miniconda3\Scripts\mamba.exe" set MAMBA_EXE=C:\miniconda3\Scripts\mamba.exe
+
+REM Check for miniforge in system location if not found in user profile
+if "%CONDA_EXE%"=="" (
+    if exist "C:\miniforge3\Scripts\conda.exe" (
+        set CONDA_EXE=C:\miniforge3\Scripts\conda.exe
+        if exist "C:\miniforge3\Scripts\mamba.exe" set MAMBA_EXE=C:\miniforge3\Scripts\mamba.exe
+        echo Found miniforge in system location: C:\miniforge3
+    )
 )
 
 if "%CONDA_EXE%"=="" (
-    echo ERROR: Could not find conda installation!
-    echo Please install miniforge first
+    echo ============================================================
+    echo ERROR: MINIFORGE NOT FOUND!
+    echo ============================================================
+    echo This installer requires miniforge to be installed.
+    echo Please install miniforge first from:
+    echo https://github.com/conda-forge/miniforge/releases
+    echo.
+    echo We specifically need miniforge, not regular conda/miniconda
+    echo because it comes pre-configured with conda-forge channels
+    echo and mamba for faster package installation.
+    echo.
+    echo After installing miniforge, restart this script.
+    echo ============================================================
     pause
     exit /b 1
 )
@@ -56,9 +66,11 @@ if "%CONDA_EXE%"=="" (
 if defined MAMBA_EXE (
     set INSTALLER=%MAMBA_EXE%
     echo Found mamba - using for faster installation
+    echo Using mamba from miniforge installation
 ) else (
     set INSTALLER=%CONDA_EXE%
-    echo Found conda - using for installation
+    echo Found conda from miniforge - using for installation
+    echo Note: Install mamba in miniforge for faster installations
 )
 
 echo Found: %INSTALLER% >> %LOGFILE%
@@ -583,7 +595,7 @@ if %SUCCESS_COUNT% geq 20 (
     echo 3. jupyter lab
     echo.
     echo DAILY USAGE:
-    echo 1. Open Anaconda Prompt / Miniforge Prompt
+    echo 1. Open Miniforge Prompt ^(NOT Anaconda Prompt^)
     echo 2. mamba activate pygile
     echo 3. jupyter lab
     echo.
@@ -620,6 +632,7 @@ echo TROUBLESHOOTING:
 echo - If packages fail to import, try: mamba activate pygile
 echo - For conda issues, try: conda clean --all
 echo - For environment issues, you can re-run this script
+echo - IMPORTANT: Always use Miniforge Prompt, not Anaconda Prompt
 echo.
 echo Installation logs saved to: %LOGFILE%
 echo Error summary saved to: %ERRORLOG%
