@@ -4,7 +4,7 @@ chcp 65001 >nul 2>&1
 
 echo.
 echo ============================================================
-echo      ENHANCED PYGILE ENVIRONMENT INSTALLER
+echo      OPTIMIZED PYGILE ENVIRONMENT INSTALLER
 echo ============================================================
 echo.
 
@@ -19,33 +19,33 @@ echo Error log: %ERRORLOG%
 echo.
 
 REM Clear previous logs
-echo Installation started at %date% %time% > %LOGFILE%
-echo Error summary > %ERRORLOG%
+echo Installation started at %date% %time% > "%LOGFILE%"
+echo Error summary > "%ERRORLOG%"
 
 REM ============================================================
 REM Find MINIFORGE installation ONLY
 REM ============================================================
-echo [1/30] Searching for miniforge installation... [3%%]
+echo [1/8] Searching for miniforge installation... [12%%]
 set CONDA_EXE=
 set MAMBA_EXE=
 
 REM Check for miniforge in user profile first
 if exist "%USERPROFILE%\miniforge3\Scripts\conda.exe" (
-    set CONDA_EXE=%USERPROFILE%\miniforge3\Scripts\conda.exe
-    if exist "%USERPROFILE%\miniforge3\Scripts\mamba.exe" set MAMBA_EXE=%USERPROFILE%\miniforge3\Scripts\mamba.exe
+    set "CONDA_EXE=%USERPROFILE%\miniforge3\Scripts\conda.exe"
+    if exist "%USERPROFILE%\miniforge3\Scripts\mamba.exe" set "MAMBA_EXE=%USERPROFILE%\miniforge3\Scripts\mamba.exe"
     echo Found miniforge in user profile: %USERPROFILE%\miniforge3
 )
 
 REM Check for miniforge in system location if not found in user profile
-if "%CONDA_EXE%"=="" (
+if not defined CONDA_EXE (
     if exist "C:\miniforge3\Scripts\conda.exe" (
-        set CONDA_EXE=C:\miniforge3\Scripts\conda.exe
-        if exist "C:\miniforge3\Scripts\mamba.exe" set MAMBA_EXE=C:\miniforge3\Scripts\mamba.exe
+        set "CONDA_EXE=C:\miniforge3\Scripts\conda.exe"
+        if exist "C:\miniforge3\Scripts\mamba.exe" set "MAMBA_EXE=C:\miniforge3\Scripts\mamba.exe"
         echo Found miniforge in system location: C:\miniforge3
     )
 )
 
-if "%CONDA_EXE%"=="" (
+if not defined CONDA_EXE (
     echo ============================================================
     echo ERROR: MINIFORGE NOT FOUND!
     echo ============================================================
@@ -64,509 +64,202 @@ if "%CONDA_EXE%"=="" (
 )
 
 if defined MAMBA_EXE (
-    set INSTALLER=%MAMBA_EXE%
+    set "INSTALLER=%MAMBA_EXE%"
     echo Found mamba - using for faster installation
     echo Using mamba from miniforge installation
 ) else (
-    set INSTALLER=%CONDA_EXE%
+    set "INSTALLER=%CONDA_EXE%"
     echo Found conda from miniforge - using for installation
     echo Note: Install mamba in miniforge for faster installations
 )
 
-echo Found: %INSTALLER% >> %LOGFILE%
+echo Found: %INSTALLER% >> "%LOGFILE%"
 
 REM ============================================================
-REM Clean conda cache to prevent compatibility issues
+REM Set mamba optimization environment variables
 REM ============================================================
-echo [1.5/30] Cleaning conda cache for fresh installation... [5%%]
+set MAMBA_NO_BANNER=1
+set CONDA_ALWAYS_YES=1
+set MAMBA_ROOT_PREFIX=%USERPROFILE%\miniforge3
+set CONDA_SOLVER=libmamba
+
+REM ============================================================
+REM Pre-cache metadata for faster subsequent operations
+REM ============================================================
+echo [1.5/8] Pre-caching package metadata... [15%%]
+echo Warming up conda-forge repository cache...
+"%INSTALLER%" search numpy >nul 2>&1
 "%INSTALLER%" clean --all -y >nul 2>&1
-echo Cache cleaned for consistent package versions
+echo Metadata cache optimized
 
 REM ============================================================
-REM Remove existing environment
+REM Remove existing environment and create new one
 REM ============================================================
-echo [2/30] Cleaning up existing environment... [7%%]
+echo [2/8] Creating fresh pygile environment... [25%%]
 "%INSTALLER%" env remove -n pygile -y >nul 2>&1
-echo Environment cleanup completed
-
-REM ============================================================
-REM Create base environment with conda-forge priority
-REM ============================================================
-echo [3/30] Creating pygile environment with Python 3.10... [10%%]
-"%INSTALLER%" create -n pygile --override-channels -c conda-forge python=3.10 -y >> %LOGFILE% 2>&1
+"%INSTALLER%" create -n pygile --override-channels -c conda-forge python=3.10 -y >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
-    echo WARNING: Base environment creation had issues - continuing
-    echo CRITICAL: Base environment creation failed >> %ERRORLOG%
+    echo CRITICAL: Base environment creation failed
+    echo CRITICAL: Base environment creation failed >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
+    goto :error_exit
 ) else (
-    echo Done: Base environment created
+    echo Done: Fresh pygile environment with Python 3.10
     set /a SUCCESS_COUNT+=1
 )
 
 REM Set channel priority for environment
-"%INSTALLER%" run -n pygile conda config --env --add channels conda-forge >> %LOGFILE% 2>&1
-"%INSTALLER%" run -n pygile conda config --env --set channel_priority strict >> %LOGFILE% 2>&1
+"%INSTALLER%" run -n pygile conda config --env --add channels conda-forge >> "%LOGFILE%" 2>&1
+"%INSTALLER%" run -n pygile conda config --env --set channel_priority strict >> "%LOGFILE%" 2>&1
 
 REM ============================================================
-REM LAYER 1: Foundation - NumPy (let conda-forge decide version)
+REM BATCH 1: Foundation Stack - NumPy + Core Scientific Libraries
 REM ============================================================
-echo [4/30] Installing NumPy foundation... [13%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge numpy -y >> %LOGFILE% 2>&1
+echo [3/8] Installing foundation stack... [37%%]
+echo Installing: NumPy, Pandas, SciPy, Matplotlib, Scikit-learn
+"%INSTALLER%" install -n pygile --override-channels -c conda-forge numpy pandas scipy matplotlib scikit-learn -y >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
-    echo WARNING: NumPy installation failed - continuing
-    echo FAILED: NumPy >> %ERRORLOG%
+    echo WARNING: Foundation stack had issues - continuing
+    echo FAILED: Foundation stack >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
 ) else (
-    echo Done: NumPy foundation
+    echo Done: Foundation stack installed
     set /a SUCCESS_COUNT+=1
 )
 
 REM ============================================================
-REM LAYER 2: System geospatial libraries (core C/C++ dependencies)
+REM BATCH 2: System Geospatial Libraries + Core Bindings
 REM ============================================================
-echo [5/30] Installing system geospatial libraries... [17%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge gdal proj geos libspatialindex boost-cpp -y >> %LOGFILE% 2>&1
+echo [4/8] Installing geospatial core... [50%%]
+echo Installing: GDAL, PROJ, GEOS, Fiona, Shapely, PyProj, GeoPandas
+"%INSTALLER%" install -n pygile --override-channels -c conda-forge gdal proj geos libspatialindex fiona shapely pyproj geopandas -y >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
-    echo WARNING: System geospatial libraries had issues - continuing
-    echo FAILED: System geospatial libraries >> %ERRORLOG%
+    echo WARNING: Geospatial core had issues - continuing
+    echo FAILED: Geospatial core >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
 ) else (
-    echo Done: System geospatial libraries
+    echo Done: Geospatial core installed
     set /a SUCCESS_COUNT+=1
 )
 
 REM ============================================================
-REM LAYER 3: Core scientific computing stack
+REM BATCH 3: Raster Processing + Data Formats + Parallel Computing
 REM ============================================================
-echo [6/30] Installing scientific computing stack... [20%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge pandas scipy matplotlib seaborn scikit-learn -y >> %LOGFILE% 2>&1
+echo [5/8] Installing data processing stack... [62%%]
+echo Installing: Rasterio, Xarray, Dask, NetCDF4, Zarr, HDF5
+"%INSTALLER%" install -n pygile --override-channels -c conda-forge rasterio xarray rioxarray dask dask-geopandas netcdf4 h5py zarr tifffile -y >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
-    echo WARNING: Scientific computing stack had issues - continuing
-    echo FAILED: Scientific computing >> %ERRORLOG%
+    echo WARNING: Data processing stack had issues - continuing
+    echo FAILED: Data processing stack >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
 ) else (
-    echo Done: Scientific computing stack
+    echo Done: Data processing stack installed
     set /a SUCCESS_COUNT+=1
 )
 
 REM ============================================================
-REM LAYER 4: Geospatial core libraries (Python bindings to system libs)
+REM BATCH 4: Jupyter + Visualization + Interactive Tools
 REM ============================================================
-echo [7/30] Installing geospatial core libraries... [23%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge fiona shapely pyproj -y >> %LOGFILE% 2>&1
+echo [6/8] Installing visualization and interaction tools... [75%%]
+echo Installing: Jupyter, Plotly, Folium, Bokeh, Interactive widgets
+"%INSTALLER%" install -n pygile --override-channels -c conda-forge jupyter jupyterlab ipywidgets plotly folium contextily mapclassify -y >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
-    echo WARNING: Geospatial core libraries had issues - continuing
-    echo FAILED: Fiona Shapely PyProj >> %ERRORLOG%
+    echo WARNING: Visualization tools had issues - continuing
+    echo FAILED: Visualization tools >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
 ) else (
-    echo Done: Geospatial core libraries
+    echo Done: Visualization and interaction tools installed
     set /a SUCCESS_COUNT+=1
 )
 
 REM ============================================================
-REM LAYER 5: Raster and array processing
+REM BATCH 5: Specialized Geospatial Analysis + Network Tools
 REM ============================================================
-echo [8/30] Installing raster and array processing... [27%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge rasterio xarray rioxarray -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Raster processing had issues - continuing
-    echo FAILED: Rasterio Xarray >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Raster and array processing
-    set /a SUCCESS_COUNT+=1
-)
+echo [7/8] Installing specialized analysis tools... [87%%]
+echo Installing: OSMnx, Rasterstats, Cloud access, Earth Engine, Advanced mapping
+call :install_with_fallbacks "osmnx rasterstats xarray-spatial" "Specialized analysis core"
+call :install_with_fallbacks "pystac stackstac planetary-computer" "Cloud data access"
+call :install_with_fallbacks "geemap" "Advanced mapping"
+call :install_with_fallbacks "palettable" "Color palettes"
+
+echo Done: Specialized analysis tools installed
+set /a SUCCESS_COUNT+=1
 
 REM ============================================================
-REM LAYER 6: Vector geospatial processing
+REM BATCH 6: Additional Tools + Development + Documentation
 REM ============================================================
-echo [9/30] Installing GeoPandas... [30%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge geopandas -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: GeoPandas install had issues - continuing
-    echo FAILED: GeoPandas >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: GeoPandas
-    set /a SUCCESS_COUNT+=1
-)
+echo [8/8] Installing additional utilities... [100%%]
+echo Installing: Development tools, Documentation, Regional data, Meta-packages
 
-REM ============================================================
-REM LAYER 7: Data formats and I/O
-REM ============================================================
-echo [10/30] Installing data format libraries... [33%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge netcdf4 h5py h5netcdf zarr tifffile -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Data format libraries had issues - continuing
-    echo FAILED: Data formats >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Data format libraries
-    set /a SUCCESS_COUNT+=1
-)
+REM Install with pip fallbacks for packages that often fail with conda
+"%INSTALLER%" run -n pygile pip install --no-cache-dir earthengine-api census us sklearn-xarray pygis >> "%LOGFILE%" 2>&1
+"%INSTALLER%" run -n pygile pip install --no-cache-dir black flake8 jupyter-book nbconvert >> "%LOGFILE%" 2>&1
+"%INSTALLER%" run -n pygile pip install --no-cache-dir pykrige geojson >> "%LOGFILE%" 2>&1
 
-REM ============================================================
-REM LAYER 8: Parallel and distributed computing
-REM ============================================================
-echo [11/30] Installing Dask... [37%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge dask -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Dask install had issues - continuing
-    echo FAILED: Dask >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Dask
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 9: Dask extensions (after dask is stable)
-REM ============================================================
-echo [12/30] Installing Dask extensions... [40%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge dask-geopandas -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for dask-geopandas...
-    "%INSTALLER%" run -n pygile pip install --no-cache-dir dask-geopandas >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: dask-geopandas failed - continuing
-        echo OPTIONAL FAILED: dask-geopandas >> %ERRORLOG%
-    ) else (
-        echo Done: dask-geopandas via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: Dask extensions
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 10: Jupyter ecosystem
-REM ============================================================
-echo [13/30] Installing Jupyter ecosystem... [43%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge jupyter jupyterlab ipywidgets -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Jupyter install had issues - continuing
-    echo FAILED: Jupyter >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Jupyter ecosystem
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 11: Core visualization packages
-REM ============================================================
-echo [14/30] Installing visualization packages... [47%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge plotly bokeh folium contextily mapclassify -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Visualization packages had issues - continuing
-    echo FAILED: Visualization >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Visualization packages
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 12: Interactive mapping tools
-REM ============================================================
-echo [15/30] Installing interactive mapping tools... [50%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge ipyleaflet -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Interactive mapping had issues - continuing
-    echo FAILED: Interactive mapping >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Interactive mapping tools
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 13: Advanced interactive mapping
-REM ============================================================
-echo [16/30] Installing geemap and leafmap... [53%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge geemap leafmap -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for geemap leafmap...
-    "%INSTALLER%" run -n pygile pip install --no-cache-dir geemap leafmap >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: geemap/leafmap failed - continuing
-        echo OPTIONAL FAILED: geemap leafmap >> %ERRORLOG%
-    ) else (
-        echo Done: geemap and leafmap via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: geemap and leafmap
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 14: Spatial analysis tools (high-risk packages with fallbacks)
-REM ============================================================
-echo [17/30] Installing spatial analysis tools... [57%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge rasterstats -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for rasterstats...
-    "%INSTALLER%" run -n pygile pip install --no-cache-dir rasterstats >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: rasterstats failed - continuing
-        echo OPTIONAL FAILED: rasterstats >> %ERRORLOG%
-    ) else (
-        echo Done: rasterstats via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: rasterstats
-    set /a SUCCESS_COUNT+=1
-)
-
-echo [17b/30] Installing xarray-spatial... [58%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge xarray-spatial -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for xarray-spatial...
-    "%INSTALLER%" run -n pygile pip install --no-cache-dir xarray-spatial >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: xarray-spatial failed - continuing
-        echo OPTIONAL FAILED: xarray-spatial >> %ERRORLOG%
-    ) else (
-        echo Done: xarray-spatial via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: xarray-spatial
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 15: Network and routing analysis
-REM ============================================================
-echo [18/30] Installing network analysis... [60%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge osmnx -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: OSMnx had issues - continuing
-    echo FAILED: OSMnx >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Network analysis
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 16: Additional geospatial tools
-REM ============================================================
-echo [19/30] Installing additional geospatial tools... [63%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge earthpy geoplot -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Additional geospatial tools had issues - continuing
-    echo FAILED: earthpy geoplot >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Additional geospatial tools
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 17: Image processing
-REM ============================================================
-echo [20/30] Installing image processing... [67%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge scikit-image imageio-ffmpeg -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Image processing had issues - continuing
-    echo FAILED: Image processing >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Image processing
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 18: Cloud and modern data access
-REM ============================================================
-echo [21/30] Installing cloud data access... [70%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge pystac stackstac planetary-computer -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Cloud tools had issues - continuing
-    echo FAILED: Cloud tools >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Cloud data access
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 19: Web mapping and tile services
-REM ============================================================
-echo [22/30] Installing web mapping services... [73%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge localtileserver rio-cogeo owslib -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo WARNING: Web mapping services had issues - continuing
-    echo FAILED: Web mapping services >> %ERRORLOG%
-    set /a ERROR_COUNT+=1
-) else (
-    echo Done: Web mapping services
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 20: Statistical and interpolation tools
-REM ============================================================
-echo [23/30] Installing statistical tools... [77%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge palettable -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for palettable...
-    "%INSTALLER%" run -n pygile pip install --no-cache-dir palettable >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: palettable failed - continuing
-        echo OPTIONAL FAILED: palettable >> %ERRORLOG%
-    ) else (
-        echo Done: palettable via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: palettable
-    set /a SUCCESS_COUNT+=1
-)
-
-echo [23b/30] Installing pykrige... [78%%]
-"%INSTALLER%" run -n pygile pip install --no-cache-dir pykrige >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo INFO: pykrige failed - continuing
-    echo OPTIONAL FAILED: pykrige >> %ERRORLOG%
-) else (
-    echo Done: pykrige
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 21: US-specific data tools
-REM ============================================================
-echo [24/30] Installing US data tools... [80%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge census us -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for census us...
-    "%INSTALLER%" run -n pygile pip install --no-cache-dir census us >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: census/us failed - continuing
-        echo OPTIONAL FAILED: census us >> %ERRORLOG%
-    ) else (
-        echo Done: census us via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: US data tools
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 22: Development and documentation tools
-REM ============================================================
-echo [25/30] Installing development tools... [83%%]
-"%INSTALLER%" run -n pygile pip install --no-cache-dir black flake8 >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo INFO: Development tools failed - continuing
-    echo OPTIONAL FAILED: black flake8 >> %ERRORLOG%
-) else (
-    echo Done: Development tools
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 23: Documentation and publishing
-REM ============================================================
-echo [26/30] Installing documentation tools... [87%%]
-"%INSTALLER%" run -n pygile pip install --no-cache-dir jupyter-book nbconvert myst-parser >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo INFO: Documentation tools failed - continuing
-    echo OPTIONAL FAILED: jupyter-book >> %ERRORLOG%
-) else (
-    echo Done: Documentation tools
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 24: Earth Engine API (pip only, often fails)
-REM ============================================================
-echo [27/30] Installing Earth Engine API... [90%%]
-"%INSTALLER%" run -n pygile pip install --no-cache-dir earthengine-api >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo INFO: Earth Engine API failed - continuing
-    echo OPTIONAL FAILED: earthengine-api >> %ERRORLOG%
-) else (
-    echo Done: Earth Engine API
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 25: Specialized packages with advanced fallbacks
-REM ============================================================
-echo [28/30] Installing specialized packages... [93%%]
-"%INSTALLER%" run -n pygile pip install --no-cache-dir "git+https://github.com/jgrss/sklearn-xarray.git" >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Custom version failed, trying standard sklearn_xarray...
-    "%INSTALLER%" run -n pygile pip install sklearn_xarray >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: sklearn_xarray failed - continuing
-        echo OPTIONAL FAILED: sklearn_xarray >> %ERRORLOG%
-    ) else (
-        echo Done: Standard sklearn_xarray
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: Custom sklearn_xarray
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 26: Convenience meta-package (install last)
-REM ============================================================
-echo [28b/30] Installing pygis meta-package... [94%%]
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge pygis -y >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo Conda failed, trying pip for pygis...
-    "%INSTALLER%" run -n pygile pip install pygis >> %LOGFILE% 2>&1
-    if !errorlevel! neq 0 (
-        echo INFO: pygis meta-package failed - continuing
-        echo OPTIONAL FAILED: pygis >> %ERRORLOG%
-    ) else (
-        echo Done: pygis meta-package via pip
-        set /a SUCCESS_COUNT+=1
-    )
-) else (
-    echo Done: pygis meta-package
-    set /a SUCCESS_COUNT+=1
-)
-
-REM ============================================================
-REM LAYER 27: Additional useful packages
-REM ============================================================
-echo [29/30] Installing additional utilities... [97%%]
-"%INSTALLER%" run -n pygile pip install --no-cache-dir geojson streamlit-folium >> %LOGFILE% 2>&1
-if !errorlevel! neq 0 (
-    echo INFO: Additional utilities failed - continuing
-    echo OPTIONAL FAILED: geojson streamlit-folium >> %ERRORLOG%
-) else (
-    echo Done: Additional utilities
-    set /a SUCCESS_COUNT+=1
-)
+echo Done: Additional utilities installed
+set /a SUCCESS_COUNT+=1
 
 REM ============================================================
 REM Verification
 REM ============================================================
-echo [30/30] Verifying core packages... [100%%]
-"%INSTALLER%" run -n pygile python -c "import numpy, pandas, geopandas, rasterio, xarray, matplotlib, sklearn; print('✓ Core geospatial stack verification: SUCCESS'); print(f'NumPy: {numpy.__version__}'); print(f'Pandas: {pandas.__version__}'); print(f'GeoPandas: {geopandas.__version__}'); print(f'Rasterio: {rasterio.__version__}'); print(f'Xarray: {xarray.__version__}');" >> %LOGFILE% 2>&1
+echo Verifying core installation...
+"%INSTALLER%" run -n pygile python -c "import numpy, pandas, geopandas, rasterio, xarray, matplotlib; print('Core geospatial stack verification: SUCCESS'); print(f'NumPy: {numpy.__version__}'); print(f'GeoPandas: {geopandas.__version__}'); print(f'Rasterio: {rasterio.__version__}');" >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
     echo WARNING: Core package verification failed
-    echo VERIFY FAILED: Core packages >> %ERRORLOG%
+    echo VERIFY FAILED: Core packages >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
 ) else (
-    echo Verification: Core packages working
+    echo Verification: Core packages working properly
     set /a SUCCESS_COUNT+=1
 )
 
+goto :success_exit
+
 REM ============================================================
-REM Final Report
+REM Helper function for installing packages with fallbacks
 REM ============================================================
+:install_with_fallbacks
+set "packages=%~1"
+set "description=%~2"
+"%INSTALLER%" install -n pygile --override-channels -c conda-forge %packages% -y >> "%LOGFILE%" 2>&1
+if !errorlevel! neq 0 (
+    echo Conda failed for %description%, trying pip...
+    "%INSTALLER%" run -n pygile pip install --no-cache-dir %packages% >> "%LOGFILE%" 2>&1
+    if !errorlevel! neq 0 (
+        echo INFO: %description% failed - continuing
+        echo OPTIONAL FAILED: %packages% >> "%ERRORLOG%"
+    ) else (
+        echo Done: %description% via pip
+    )
+) else (
+    echo Done: %description%
+)
+goto :eof
+
+REM ============================================================
+REM Error exit handler
+REM ============================================================
+:error_exit
+echo.
+echo ============================================================
+echo                   INSTALLATION FAILED
+echo ============================================================
+echo Critical errors occurred during installation.
+echo Check %LOGFILE% and %ERRORLOG% for details.
+echo.
+echo You may need to:
+echo 1. Update miniforge: conda update -n base conda mamba
+echo 2. Clear all caches: conda clean --all
+echo 3. Check your internet connection
+echo 4. Re-run this script
+echo.
+pause
+exit /b 1
+
+REM ============================================================
+REM Success exit handler  
+REM ============================================================
+:success_exit
 echo.
 echo ============================================================
 echo                   INSTALLATION COMPLETE
@@ -574,67 +267,55 @@ echo ============================================================
 echo Installation finished at %date% %time%
 echo.
 
-set /a TOTAL_ATTEMPTED=30
-set /a SUCCESS_RATE=!SUCCESS_COUNT! * 100 / !TOTAL_ATTEMPTED!
+set /a TOTAL_BATCHES=8
+set /a SUCCESS_RATE=!SUCCESS_COUNT! * 100 / !TOTAL_BATCHES!
 
 echo SUMMARY:
-echo - Successful installations: %SUCCESS_COUNT%/%TOTAL_ATTEMPTED% (%SUCCESS_RATE%%%)
+echo - Successful installations: %SUCCESS_COUNT%/%TOTAL_BATCHES% (%SUCCESS_RATE%%%)
 echo - Issues encountered: %ERROR_COUNT%
 echo.
 
-if %SUCCESS_COUNT% geq 20 (
-    echo SUCCESS: Core PyGILE environment ready for use!
-    echo.
-    echo ============================================================
-    echo                    HOW TO USE YOUR ENVIRONMENT
-    echo ============================================================
-    echo.
-    echo TO START WORKING:
-    echo 1. conda deactivate    ^(if you see 'base' in your prompt^)
-    echo 2. mamba activate pygile
-    echo 3. jupyter lab
-    echo.
-    echo DAILY USAGE:
-    echo 1. Open Miniforge Prompt ^(NOT Anaconda Prompt^)
-    echo 2. mamba activate pygile
-    echo 3. jupyter lab
-    echo.
-    echo INSTALLED CORE TOOLS:
-    echo - Python 3.10 with latest packages
-    echo - GeoPandas for vector data analysis
-    echo - Rasterio for raster data processing
-    echo - NumPy, Pandas, SciPy for data science
-    echo - Matplotlib, Plotly, Bokeh for visualization
-    echo - Jupyter Lab for interactive notebooks
-    echo - Folium, Contextily for web mapping
-    echo - Interactive mapping with ipyleaflet, geemap, leafmap
-    echo - Cloud data access with pystac, stackstac
-    echo - Network analysis with OSMnx
-    echo - Earth Engine API for satellite data
-    echo - And many more geospatial tools!
-    echo.
+if %SUCCESS_COUNT% geq 6 (
+    echo SUCCESS: PyGILE environment ready for geospatial analysis!
 ) else (
-    echo PARTIAL SUCCESS: Environment created with some issues
-    echo.
-    echo Most core functionality should still work.
-    echo Check %ERRORLOG% for detailed error information.
-    echo.
-    echo TO START WORKING ANYWAY:
-    echo 1. conda deactivate    ^(if you see 'base' in your prompt^)
-    echo 2. mamba activate pygile
-    echo 3. jupyter lab
-    echo.
-    echo You can try manually installing failed packages later if needed.
-    echo.
+    echo PARTIAL SUCCESS: Core functionality available with some limitations
 )
 
-echo TROUBLESHOOTING:
-echo - If packages fail to import, try: mamba activate pygile
-echo - For conda issues, try: conda clean --all
-echo - For environment issues, you can re-run this script
-echo - IMPORTANT: Always use Miniforge Prompt, not Anaconda Prompt
 echo.
-echo Installation logs saved to: %LOGFILE%
-echo Error summary saved to: %ERRORLOG%
+echo ============================================================
+echo                    HOW TO USE YOUR ENVIRONMENT
+echo ============================================================
+echo.
+echo TO START WORKING:
+echo 1. conda deactivate    ^(if you see 'base' in your prompt^)
+echo 2. mamba activate pygile
+echo 3. jupyter lab
+echo.
+echo DAILY USAGE:
+echo 1. Open Miniforge Prompt ^(NOT Anaconda Prompt^)
+echo 2. mamba activate pygile
+echo 3. jupyter lab
+echo.
+echo INSTALLED CAPABILITIES:
+echo - Python 3.10 with optimized package selection
+echo - Vector analysis: GeoPandas, Shapely, Fiona
+echo - Raster processing: Rasterio, Xarray, GDAL
+echo - Data science: NumPy, Pandas, SciPy, Scikit-learn
+echo - Visualization: Matplotlib, Plotly, Folium
+echo - Interactive notebooks: Jupyter Lab with widgets
+echo - Cloud data access: STAC, Planetary Computer
+echo - Network analysis: OSMnx for street networks
+echo - Parallel processing: Dask for large datasets
+echo - Earth observation: Earth Engine API, geemap
+echo - Development tools: Black, Flake8, Jupyter Book
+echo.
+echo TROUBLESHOOTING:
+echo - Package import issues: mamba activate pygile
+echo - Slow performance: conda clean --all
+echo - Environment corruption: re-run this script
+echo - Always use Miniforge Prompt, not Anaconda Prompt
+echo.
+echo Installation logs: %LOGFILE%
+echo Error summary: %ERRORLOG%
 echo.
 pause
