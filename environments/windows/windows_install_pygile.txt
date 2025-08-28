@@ -3,9 +3,9 @@ setlocal enabledelayedexpansion
 chcp 65001 >nul 2>&1
 
 echo.
-echo ============================================================
-echo      OPTIMIZED PYGILE ENVIRONMENT INSTALLER
-echo ============================================================
+echo ====================================================
+echo       PYGILE ENVIRONMENT INSTALLER
+echo ====================================================
 echo.
 
 set LOGFILE=pygile_installation.log
