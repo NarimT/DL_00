@@ -1,6 +1,0 @@
-Pour Point Coordinates:
-Latitude: 27.150900
-Longitude: 86.433300
-Projected X: 443849.46
-Projected Y: 3003275.71
-Watershed Area: 4065.90 km²
