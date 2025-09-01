@@ -10,6 +10,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV CONDA_DIR=/opt/conda
 ENV PATH=/opt/conda/bin:$PATH
+ENV MAMBA_NO_BANNER=1
+ENV CONDA_ALWAYS_YES=1
+ENV CONDA_SOLVER=libmamba
 
 # Install system dependencies and miniforge in one layer with cleanup
 RUN apt-get update && \
@@ -21,60 +24,68 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Configure conda
-RUN conda config --set channel_priority strict
+# Configure conda channels globally
+RUN conda config --set channel_priority strict && \
+    conda config --add channels conda-forge
 
-# Install core Python and scientific stack
-RUN mamba install -n base -c conda-forge -y \
-    python=3.10 numpy pandas scipy matplotlib \
+# Create pygile environment (matching batch file)
+RUN mamba create -n pygile --override-channels -c conda-forge python=3.10 -y && \
+    mamba clean -all -y
+
+# Configure channels for pygile environment
+RUN mamba run -n pygile conda config --env --add channels conda-forge && \
+    mamba run -n pygile conda config --env --set channel_priority strict
+
+# BATCH 1: Foundation Stack - NumPy + Core Scientific Libraries
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    numpy pandas scipy matplotlib scikit-learn \
     && mamba clean -all -y
 
-# Install core geospatial libraries
-RUN mamba install -n base -c conda-forge -y \
-    gdal geopandas rasterio shapely pyproj fiona \
+# BATCH 2: System Geospatial Libraries + Core Bindings  
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    gdal proj geos libspatialindex fiona shapely pyproj geopandas \
     && mamba clean -all -y
 
-# Install data format libraries
-RUN mamba install -n base -c conda-forge -y \
-    xarray netcdf4 h5py zarr \
+# BATCH 3: Raster Processing + Data Formats + Parallel Computing
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    rasterio xarray rioxarray dask dask-geopandas netcdf4 h5py zarr tifffile \
     && mamba clean -all -y
 
-# Install visualization packages
-RUN mamba install -n base -c conda-forge -y \
-    plotly bokeh folium contextily \
+# BATCH 4: Jupyter + Visualization + Interactive Tools
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    jupyter jupyterlab ipywidgets plotly folium contextily mapclassify \
     && mamba clean -all -y
 
-# Install Jupyter ecosystem
-RUN mamba install -n base -c conda-forge -y \
-    jupyter jupyterlab ipywidgets \
+# BATCH 5: Specialized Geospatial Analysis + Network Tools
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    osmnx rasterstats xarray-spatial \
     && mamba clean -all -y
 
-# Install geospatial analysis tools
-RUN mamba install -n base -c conda-forge -y \
-    osmnx earthpy \
+# Install cloud access tools (fallback to pip if conda fails)
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    pystac stackstac planetary-computer || \
+    mamba run -n pygile pip install --no-cache-dir pystac stackstac planetary-computer
+
+# Install advanced mapping tools  
+RUN mamba install -n pygile --override-channels -c conda-forge -y \
+    geemap palettable \
     && mamba clean -all -y
 
-# Install machine learning
-RUN mamba install -n base -c conda-forge -y \
-    scikit-learn \
-    && mamba clean -all -y
-
-# Install additional packages via pip (your original list without geowombat)
-RUN pip install --no-cache-dir \
-    earthengine-api streamlit-folium nbconvert black flake8 \
+# BATCH 6: Additional Tools + Development + Documentation (via pip like batch file)
+RUN mamba run -n pygile pip install --no-cache-dir \
+    earthengine-api census us sklearn-xarray pygis \
+    black flake8 jupyter-book nbconvert \
+    pykrige geojson \
     && pip cache purge
 
-RUN pip install --no-cache-dir \
-    sympy jupyter-book geojson pykrige \
+# Additional tools present in original docker but not in batch (keeping for compatibility)
+RUN mamba run -n pygile pip install --no-cache-dir \
+    earthpy streamlit-folium geoplot localtileserver rio-cogeo \
     && pip cache purge
 
-RUN pip install --no-cache-dir \
-    geoplot sklearn-xarray census \
-    && pip cache purge
-
-RUN mamba install -n pygile -c conda-forge -y \
-    localtileserver rio-cogeo rioxarray \
-    && mamba clean -all -y
+# Activate pygile environment by default
+RUN echo "conda activate pygile" >> ~/.bashrc
+ENV CONDA_DEFAULT_ENV=pygile
 
 # Copy entrypoint script and fix line endings
 COPY entrypoint.sh /usr/local/bin/

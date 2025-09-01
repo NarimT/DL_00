@@ -13,26 +13,35 @@ echo "GDAL version: $(gdalinfo --version)"
 echo "Working directory: $(pwd)"
 echo "========================================"
 
-# Activate conda base environment
+# Activate conda pygile environment
 source /opt/conda/etc/profile.d/conda.sh
-conda activate base
+conda activate pygile
 
 # Test core geospatial packages silently
 python -c "
 import sys
+failed = []
+
+# Test regular packages
 packages = [
-    'gdal', 'geopandas', 'rasterio', 'shapely', 'fiona', 
+    'geopandas', 'rasterio', 'shapely', 'fiona', 
     'pyproj', 'folium', 'contextily',
     'matplotlib', 'numpy', 'pandas', 'jupyter'
 ]
-failed = []
 for pkg in packages:
     try:
         __import__(pkg)
     except ImportError:
         failed.append(pkg)
 
+# Test GDAL with correct import
+try:
+    from osgeo import gdal
+except ImportError:
+    failed.append('gdal')
+
 if failed:
+    print(f'Failed packages: {failed}')
     sys.exit(1)
 " 2>/dev/null
 
@@ -79,10 +88,12 @@ cat > /workspace/notebooks/Welcome.ipynb << 'EOF'
     "import folium\n",
     "import matplotlib.pyplot as plt\n",
     "import numpy as np\n",
+    "from osgeo import gdal\n",
     "\n",
     "print(\"All packages working!\")\n",
     "print(f\"GeoPandas version: {gpd.__version__}\")\n",
-    "print(f\"Rasterio version: {rasterio.__version__}\")"
+    "print(f\"Rasterio version: {rasterio.__version__}\")\n",
+    "print(f\"GDAL version: {gdal.__version__}\")"
    ]
   },
   {
