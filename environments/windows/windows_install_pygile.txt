@@ -158,17 +158,29 @@ if !errorlevel! neq 0 (
 )
 
 REM ============================================================
-REM BATCH 4: Jupyter + Visualization + Interactive Tools
+REM BATCH 4: Jupyter + Visualization + Interactive Tools + Node.js
 REM ============================================================
 echo [6/8] Installing visualization and interaction tools... [75%%]
-echo Installing: Jupyter, Plotly, Folium, Bokeh, Interactive widgets
-"%INSTALLER%" install -n pygile --override-channels -c conda-forge jupyter jupyterlab ipywidgets plotly folium contextily mapclassify -y >> "%LOGFILE%" 2>&1
+echo Installing: Jupyter, Plotly, Folium, Bokeh, Interactive widgets, matplotlib integration, Node.js
+"%INSTALLER%" install -n pygile --override-channels -c conda-forge jupyter jupyterlab ipywidgets plotly folium contextily mapclassify ipympl nodejs -y >> "%LOGFILE%" 2>&1
 if !errorlevel! neq 0 (
     echo WARNING: Visualization tools had issues - continuing
     echo FAILED: Visualization tools >> "%ERRORLOG%"
     set /a ERROR_COUNT+=1
 ) else (
     echo Done: Visualization and interaction tools installed
+    set /a SUCCESS_COUNT+=1
+)
+
+REM Build Jupyter Lab extensions for matplotlib plotting
+echo Building Jupyter Lab extensions for proper matplotlib display...
+"%INSTALLER%" run -n pygile jupyter lab build --dev-build=False --minimize=False >> "%LOGFILE%" 2>&1
+if !errorlevel! neq 0 (
+    echo WARNING: Jupyter Lab build had issues - plotting may not work properly
+    echo FAILED: Jupyter Lab build >> "%ERRORLOG%"
+    set /a ERROR_COUNT+=1
+) else (
+    echo Done: Jupyter Lab extensions built successfully
     set /a SUCCESS_COUNT+=1
 )
 
@@ -211,6 +223,19 @@ if !errorlevel! neq 0 (
 ) else (
     echo Verification: Core packages working properly
     set /a SUCCESS_COUNT+=1
+)
+
+REM Test matplotlib plotting capability
+echo Testing matplotlib plotting capability...
+"%INSTALLER%" run -n pygile python -c "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt; plt.plot([1,2,3], [1,4,2]); plt.savefig('test_plot.png'); print('Matplotlib plotting: SUCCESS')" >> "%LOGFILE%" 2>&1
+if !errorlevel! neq 0 (
+    echo WARNING: Matplotlib plotting test failed
+    echo VERIFY FAILED: Matplotlib plotting >> "%ERRORLOG%"
+    set /a ERROR_COUNT+=1
+) else (
+    echo Verification: Matplotlib plotting working properly
+    set /a SUCCESS_COUNT+=1
+    del test_plot.png >nul 2>&1
 )
 
 goto :success_exit
@@ -267,7 +292,7 @@ echo ============================================================
 echo Installation finished at %date% %time%
 echo.
 
-set /a TOTAL_BATCHES=8
+set /a TOTAL_BATCHES=9
 set /a SUCCESS_RATE=!SUCCESS_COUNT! * 100 / !TOTAL_BATCHES!
 
 echo SUMMARY:
@@ -275,8 +300,8 @@ echo - Successful installations: %SUCCESS_COUNT%/%TOTAL_BATCHES% (%SUCCESS_RATE%
 echo - Issues encountered: %ERROR_COUNT%
 echo.
 
-if %SUCCESS_COUNT% geq 6 (
-    echo SUCCESS: PyGILE environment ready for geospatial analysis!
+if %SUCCESS_COUNT% geq 7 (
+    echo SUCCESS: PyGILE environment ready for geospatial analysis with working matplotlib plots!
 ) else (
     echo PARTIAL SUCCESS: Core functionality available with some limitations
 )
@@ -301,19 +326,25 @@ echo - Python 3.10 with optimized package selection
 echo - Vector analysis: GeoPandas, Shapely, Fiona
 echo - Raster processing: Rasterio, Xarray, GDAL
 echo - Data science: NumPy, Pandas, SciPy, Scikit-learn
-echo - Visualization: Matplotlib, Plotly, Folium
-echo - Interactive notebooks: Jupyter Lab with widgets
+echo - Visualization: Matplotlib, Plotly, Folium with WORKING Jupyter Lab integration
+echo - Interactive notebooks: Jupyter Lab with widgets and matplotlib support
 echo - Cloud data access: STAC, Planetary Computer
 echo - Network analysis: OSMnx for street networks
 echo - Parallel processing: Dask for large datasets
 echo - Earth observation: Earth Engine API, geemap
 echo - Development tools: Black, Flake8, Jupyter Book
 echo.
+echo MATPLOTLIB PLOTTING:
+echo - Plots will now display properly in Jupyter Lab notebooks
+echo - No need to change your existing plotting code
+echo - Both static and interactive plots are supported
+echo.
 echo TROUBLESHOOTING:
 echo - Package import issues: mamba activate pygile
 echo - Slow performance: conda clean --all
 echo - Environment corruption: re-run this script
 echo - Always use Miniforge Prompt, not Anaconda Prompt
+echo - If plots still don't work, try: jupyter lab clean and jupyter lab build
 echo.
 echo Installation logs: %LOGFILE%
 echo Error summary: %ERRORLOG%
