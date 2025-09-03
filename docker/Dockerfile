@@ -3,7 +3,7 @@ FROM ghcr.io/osgeo/gdal:ubuntu-full-latest
 
 # Maintainer info
 LABEL maintainer="pyGILE Team"
-LABEL description="pygile comprehensive geospatial analysis environment"
+LABEL description="pygile comprehensive geospatial analysis environment with working matplotlib plotting"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -51,10 +51,14 @@ RUN mamba install -n pygile --override-channels -c conda-forge -y \
     rasterio xarray rioxarray dask dask-geopandas netcdf4 h5py zarr tifffile \
     && mamba clean -all -y
 
-# BATCH 4: Jupyter + Visualization + Interactive Tools
+# BATCH 4: Jupyter + Visualization + Interactive Tools + Node.js + matplotlib integration
 RUN mamba install -n pygile --override-channels -c conda-forge -y \
-    jupyter jupyterlab ipywidgets plotly folium contextily mapclassify \
+    jupyter jupyterlab ipywidgets plotly folium contextily mapclassify ipympl nodejs \
     && mamba clean -all -y
+
+# Build Jupyter Lab extensions for matplotlib plotting
+RUN mamba run -n pygile jupyter lab build --dev-build=False --minimize=False && \
+    mamba clean -all -y
 
 # BATCH 5: Specialized Geospatial Analysis + Network Tools
 RUN mamba install -n pygile --override-channels -c conda-forge -y \
@@ -82,6 +86,13 @@ RUN mamba run -n pygile pip install --no-cache-dir \
 RUN mamba run -n pygile pip install --no-cache-dir \
     earthpy streamlit-folium geoplot localtileserver rio-cogeo \
     && pip cache purge
+
+# Verify installation (matching batch file verification)
+RUN mamba run -n pygile python -c "import numpy, pandas, geopandas, rasterio, xarray, matplotlib; print('Core geospatial stack verification: SUCCESS'); print(f'NumPy: {numpy.__version__}'); print(f'GeoPandas: {geopandas.__version__}'); print(f'Rasterio: {rasterio.__version__}')"
+
+# Test matplotlib plotting capability
+RUN mamba run -n pygile python -c "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt; plt.plot([1,2,3], [1,4,2]); plt.savefig('/tmp/test_plot.png'); print('Matplotlib plotting: SUCCESS')" && \
+    rm -f /tmp/test_plot.png
 
 # Activate pygile environment by default
 RUN echo "conda activate pygile" >> ~/.bashrc
