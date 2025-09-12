@@ -15,9 +15,9 @@
 
 ## Quick Start for PyGILE Development
 
-1. Pull the image: `docker pull iamvuon/pygile`
+1. Pull the image: `docker pull dockagile/pygile`
 2. Navigate to your PyGILE project directory
-3. Run with volume mounting: `docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile iamvuon/pygile`
+3. Run with volume mounting: `docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile dockagile/pygile`
 4. Access Jupyter at: http://localhost:8888
 
 ## Platform-Specific Instructions
@@ -29,20 +29,20 @@
 docker pull dockagile/pygile
 
 # Run with volume mounting (PowerShell)
-docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile iamvuon/pygile
+docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile dockagile/pygile
 
 # Run with volume mounting (Command Prompt)
-docker run --name pygile -p 8888:8888 -v %cd%:/workspace/pygile iamvuon/pygile
+docker run --name pygile -p 8888:8888 -v %cd%:/workspace/pygile dockagile/pygile
 ```
 
 ### **Linux**
 
 ```bash
 # Pull the image (try ARM64 first, fallback to amd64 if needed)
-docker pull --platform linux/arm64 dockagile/pygile || docker pull --platform linux/amd64 iamvuon/pygile
+docker pull --platform linux/arm64 dockagile/pygile || docker pull --platform linux/amd64 dockagile/pygile
 
 # Run with volume mounting
-docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile iamvuon/pygile
+docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile dockagile/pygile
 ```
 
 ### **macOS (Apple Silicon M1/M2/M3)**
@@ -51,10 +51,10 @@ docker run --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile iamvuon/pygile
 
 ```bash
 # Pull with explicit platform
-docker pull --platform linux/amd64 iamvuon/pygile
+docker pull --platform linux/amd64 dockagile/pygile
 
 # Run with explicit platform to avoid compatibility issues
-docker run --platform linux/amd64 --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile iamvuon/pygile
+docker run --platform linux/amd64 --name pygile -p 8888:8888 -v ${PWD}:/workspace/pygile dockagile/pygile
 ```
 
 **Required Setup for macOS**:
@@ -87,25 +87,25 @@ OR; IF YOU WISH TO PULL AND RUN WITHOUT BUILDING
 Open Docker Desktop and open terminal:
 
 ```bash
-docker pull iamvuon/pygile
+docker pull dockagile/pygile
 ```
 
 Run the container:
 
 ```bash
-docker run iamvuon/pygile
+docker run dockagile/pygile
 ```
 
 If you want to auto-delete when container stops:
 
 ```bash
-docker run --rm iamvuon/pygile
+docker run --rm dockagile/pygile
 ```
 
 To run with the standard PyGILE container name:
 
 ```bash
-docker run --name pygile iamvuon/pygile
+docker run --name pygile dockagile/pygile
 ```
 
 ## How to connect to your PyGILE repo and run Jupyter?
@@ -193,7 +193,7 @@ docker logs pygile
 Run PyGILE interactively:
 
 ```bash
-docker run -it iamvuon/pygile bash
+docker run -it dockagile/pygile bash
 ```
 
 ## How to manage PyGILE containers and images?
@@ -221,5 +221,5 @@ To remove the PyGILE image:
 ```bash
 docker rmi pygile
 # or
-docker rmi iamvuon/pygile
+docker rmi dockagile/pygile
 ```
