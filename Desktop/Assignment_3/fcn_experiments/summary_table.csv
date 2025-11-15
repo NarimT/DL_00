@@ -1,0 +1,7 @@
+mode,upsample,val_loss,val_pixel_acc,val_mIoU,model_path
+32s,transpose,0.09536660276353359,1.0,1.0,fcn_experiments/fcn_32s_transpose.pth
+32s,bilinear,0.005591553053818643,1.0,1.0,fcn_experiments/fcn_32s_bilinear.pth
+16s,transpose,0.05137067148461938,0.99993896484375,0.499969482421875,fcn_experiments/fcn_16s_transpose.pth
+16s,bilinear,0.002461617365042912,1.0,1.0,fcn_experiments/fcn_16s_bilinear.pth
+8s,transpose,0.04857752495445311,0.9971733093261719,0.49858665466308594,fcn_experiments/fcn_8s_transpose.pth
+8s,bilinear,0.004389149878988974,1.0,1.0,fcn_experiments/fcn_8s_bilinear.pth
